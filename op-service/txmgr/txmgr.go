@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 
+	"github.com/ethereum-optimism/optimism/op-service/backoff"
 	"github.com/ethereum-optimism/optimism/op-service/txmgr/metrics"
 )
 
@@ -175,7 +176,9 @@ func (m *SimpleTxManager) send(ctx context.Context, candidate TxCandidate) (*typ
 		ctx, cancel = context.WithTimeout(ctx, m.cfg.TxSendTimeout)
 		defer cancel()
 	}
-	tx, err := m.craftTx(ctx, candidate)
+	tx, err := backoff.Do(ctx, 30, backoff.Fixed(2*time.Second), func() (*types.Transaction, error) {
+		return m.craftTx(ctx, candidate)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the tx: %w", err)
 	}
