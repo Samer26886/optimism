@@ -97,7 +97,7 @@ func newTypedService(ctx context.Context, logger log.Logger, cfg *config.Config,
 	}
 
 	return &service{
-		agent:                   NewAgent(loader, int(gameDepth), provider, responder, updater, cfg.AgreeWithProposedOutput, gameLogger),
+		agent:                   NewAgent(loader, int(gameDepth), provider, caller, responder, updater, cfg.AgreeWithProposedOutput, gameLogger),
 		agreeWithProposedOutput: cfg.AgreeWithProposedOutput,
 		caller:                  caller,
 		logger:                  gameLogger,

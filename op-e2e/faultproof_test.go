@@ -200,6 +200,10 @@ func TestCannonDisputeGame(t *testing.T) {
 			sys.TimeTravelClock.AdvanceTime(game.GameDuration(ctx))
 			require.NoError(t, utils.WaitNextBlock(ctx, l1Client))
 
+			// Manually resolve the game since the "honest actor" is the defender
+			// and won't call resolve.
+			game.Resolve(ctx)
+
 			game.WaitForGameStatus(ctx, disputegame.StatusChallengerWins)
 			game.LogGameData(ctx)
 		})

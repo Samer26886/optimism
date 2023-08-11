@@ -113,7 +113,7 @@ func (g *FaultGameHelper) WaitForGameStatus(ctx context.Context, expected Status
 	g.t.Logf("Waiting for game %v to have status %v", g.addr, expected)
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
-	err := utils.WaitFor(ctx, time.Second, func() (bool, error) {
+	err := utils.WaitFor(ctx, 3*time.Second, func() (bool, error) {
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 		status, err := g.game.Status(&bind.CallOpts{Context: ctx})

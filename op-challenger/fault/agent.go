@@ -10,6 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+type StatusFetcher interface {
+	GetGameStatus(context.Context) (types.GameStatus, error)
+}
+
 // Responder takes a response action & executes.
 // For full op-challenger this means executing the transaction on chain.
 type Responder interface {
@@ -23,17 +27,19 @@ type Agent struct {
 	solver                  *solver.Solver
 	loader                  Loader
 	responder               Responder
+	statusFetcher           StatusFetcher
 	updater                 types.OracleUpdater
 	maxDepth                int
 	agreeWithProposedOutput bool
 	log                     log.Logger
 }
 
-func NewAgent(loader Loader, maxDepth int, trace types.TraceProvider, responder Responder, updater types.OracleUpdater, agreeWithProposedOutput bool, log log.Logger) *Agent {
+func NewAgent(loader Loader, maxDepth int, trace types.TraceProvider, statusFetcher StatusFetcher, responder Responder, updater types.OracleUpdater, agreeWithProposedOutput bool, log log.Logger) *Agent {
 	return &Agent{
 		solver:                  solver.NewSolver(maxDepth, trace),
 		loader:                  loader,
 		responder:               responder,
+		statusFetcher:           statusFetcher,
 		updater:                 updater,
 		maxDepth:                maxDepth,
 		agreeWithProposedOutput: agreeWithProposedOutput,
@@ -65,10 +71,30 @@ func (a *Agent) Act(ctx context.Context) error {
 	return nil
 }
 
+// ShouldResolve returns true if the agent should resolve the game.
+func (a *Agent) ShouldResolve(ctx context.Context) bool {
+	status, err := a.statusFetcher.GetGameStatus(ctx)
+	if err != nil {
+		a.log.Warn("Failed to get game status", "err", err)
+		return false
+	}
+	expectedStatus := types.GameStatusDefenderWon
+	if a.agreeWithProposedOutput {
+		expectedStatus = types.GameStatusChallengerWon
+	}
+	if expectedStatus != status {
+		a.log.Warn("Not resolving game with disagreed status", "expected_status", expectedStatus, "status", status)
+	}
+	return expectedStatus == status
+}
+
 // tryResolve resolves the game if it is in a terminal state
 // and returns true if the game resolves successfully.
 func (a *Agent) tryResolve(ctx context.Context) bool {
 	if !a.responder.CanResolve(ctx) {
+		return false
+	}
+	if !a.ShouldResolve(ctx) {
 		return false
 	}
 	a.log.Info("Resolving game")
