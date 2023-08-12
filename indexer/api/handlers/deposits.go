@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/ethereum-optimism/optimism/indexer/api/middleware"
 	"github.com/ethereum-optimism/optimism/indexer/database"
@@ -29,9 +30,9 @@ type DepositResponse struct {
 }
 
 // TODO this is original spec but maybe include the l2 block info too for the relayed tx
-func newDepositResponse(deposits []*database.L1BridgeDepositWithTransactionHashes) DepositResponse {
-	items := make([]DepositItem, 0, len(deposits))
-	for _, deposit := range deposits {
+func newDepositResponse(deposits *database.L1BridgeDepositsResponse) DepositResponse {
+	items := make([]DepositItem, 0, len(deposits.Deposits))
+	for _, deposit := range deposits.Deposits {
 		item := DepositItem{
 			Guid: deposit.L1BridgeDeposit.TransactionSourceHash.String(),
 			Tx: Transaction{
@@ -76,8 +77,8 @@ func newDepositResponse(deposits []*database.L1BridgeDepositWithTransactionHashe
 	}
 
 	return DepositResponse{
-		Cursor:      "42042042-4204-4204-4204-420420420420", // TODO
-		HasNextPage: false,                                  // TODO
+		Cursor:      deposits.Cursor,
+		HasNextPage: deposits.HasNextPage,
 		Items:       items,
 	}
 }
@@ -87,8 +88,22 @@ func L1DepositsHandler(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 
 	address := common.HexToAddress(chi.URLParam(r, "address"))
+	cursor := r.URL.Query().Get("cursor")
+	limitQuery := r.URL.Query().Get("limit")
 
-	deposits, err := btv.L1BridgeDepositsByAddress(address)
+	defaultLimit := 100
+	limit := defaultLimit
+	if limitQuery != "" {
+		parsedLimit, err := strconv.Atoi(limitQuery)
+		if err != nil {
+			http.Error(w, "Limit could not be parsed into a number", http.StatusBadRequest)
+			logger.Error("Invalid limit")
+			logger.Error(err.Error())
+		}
+		limit = parsedLimit
+	}
+
+	deposits, err := btv.L1BridgeDepositsByAddress(address, cursor, limit)
 	if err != nil {
 		http.Error(w, "Internal server error reading deposits", http.StatusInternalServerError)
 		logger.Error("Unable to read deposits from DB")

@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS l2_block_headers (
     rlp_bytes VARCHAR NOT NULL
 );
 
-/** 
+/**
  * EVENT DATA
  */
 
