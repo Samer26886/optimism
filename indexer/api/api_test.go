@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/ethereum-optimism/optimism/indexer/database"
+	"github.com/ethereum-optimism/optimism/op-node/testlog"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,7 +67,8 @@ func (mbv *MockBridgeTransfersView) L2BridgeWithdrawalsByAddress(address common.
 }
 
 func TestHealthz(t *testing.T) {
-	api := NewApi(&MockBridgeTransfersView{})
+	logger := testlog.Logger(t, log.LvlInfo)
+	api := NewApi(&MockBridgeTransfersView{}, logger)
 	request, err := http.NewRequest("GET", "/healthz", nil)
 	assert.Nil(t, err)
 
@@ -76,7 +79,8 @@ func TestHealthz(t *testing.T) {
 }
 
 func TestL1BridgeDepositsHandler(t *testing.T) {
-	api := NewApi(&MockBridgeTransfersView{})
+	logger := testlog.Logger(t, log.LvlInfo)
+	api := NewApi(&MockBridgeTransfersView{}, logger)
 	request, err := http.NewRequest("GET", "/api/v0/deposits/0x123", nil)
 	assert.Nil(t, err)
 
@@ -87,7 +91,8 @@ func TestL1BridgeDepositsHandler(t *testing.T) {
 }
 
 func TestL2BridgeWithdrawalsByAddressHandler(t *testing.T) {
-	api := NewApi(&MockBridgeTransfersView{})
+	logger := testlog.Logger(t, log.LvlInfo)
+	api := NewApi(&MockBridgeTransfersView{}, logger)
 	request, err := http.NewRequest("GET", "/api/v0/withdrawals/0x123", nil)
 	assert.Nil(t, err)
 
