@@ -43,7 +43,7 @@ type WithdrawalResponse struct {
 }
 
 func newWithdrawalResponse(withdrawals []*database.L2BridgeWithdrawalWithTransactionHashes) WithdrawalResponse {
-	var items []WithdrawalItem
+	items := make([]WithdrawalItem, 0, len(withdrawals))
 	for _, withdrawal := range withdrawals {
 		item := WithdrawalItem{
 			Guid:            withdrawal.L2BridgeWithdrawal.TransactionWithdrawalHash.String(),

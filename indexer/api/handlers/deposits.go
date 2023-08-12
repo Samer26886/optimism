@@ -29,7 +29,7 @@ type DepositResponse struct {
 
 // TODO this is original spec but maybe include the l2 block info too for the relayed tx
 func newDepositResponse(deposits []*database.L1BridgeDepositWithTransactionHashes) DepositResponse {
-	var items []DepositItem
+	items := make([]DepositItem, 0, len(deposits))
 	for _, deposit := range deposits {
 		item := DepositItem{
 			Guid: deposit.L1BridgeDeposit.TransactionSourceHash.String(),
