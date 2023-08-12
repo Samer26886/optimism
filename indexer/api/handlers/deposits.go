@@ -83,7 +83,9 @@ func L1DepositsHandler(w http.ResponseWriter, r *http.Request) {
 
 	deposits, err := btv.L1BridgeDepositsByAddress(address)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error reading deposits", http.StatusInternalServerError)
+		logger.Error("Unable to read deposits from DB")
+		logger.Error(err.Error())
 	}
 
 	response := newDepositResponse(deposits)

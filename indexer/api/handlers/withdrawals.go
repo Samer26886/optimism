@@ -105,7 +105,9 @@ func L2WithdrawalsHandler(w http.ResponseWriter, r *http.Request) {
 
 	withdrawals, err := btv.L2BridgeWithdrawalsByAddress(address)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error fetching withdrawals", http.StatusInternalServerError)
+		logger.Error("Unable to read deposits from DB")
+		logger.Error(err.Error())
 		return
 	}
 
