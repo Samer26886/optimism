@@ -8,8 +8,12 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
-var loggerKey = "logger"
-var bridgeTransfersViewKey = "bridgeTransfersViewKey"
+type contextKey string
+
+const (
+	loggerKey              contextKey = "logger"
+	bridgeTransfersViewKey contextKey = "bridgeTransfersView"
+)
 
 // Setters
 func setLogger(ctx context.Context, logger log.Logger) context.Context {
@@ -32,7 +36,7 @@ func GetLogger(ctx context.Context) log.Logger {
 func GetBridgeTransfersView(ctx context.Context) database.BridgeTransfersView {
 	bv, ok := ctx.Value(bridgeTransfersViewKey).(database.BridgeTransfersView)
 	if !ok {
-		panic("Logger not found in context!")
+		panic("BridgeTransfersView not found in context!")
 	}
 	return bv
 }
@@ -40,8 +44,8 @@ func GetBridgeTransfersView(ctx context.Context) database.BridgeTransfersView {
 func ContextMiddleware(logger log.Logger, bv database.BridgeTransfersView) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "logger", logger)
-			ctx = context.WithValue(ctx, "bridgeTransfersView", bv)
+			ctx := setLogger(r.Context(), logger)
+			ctx = setBridgeTransfersView(ctx, bv)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

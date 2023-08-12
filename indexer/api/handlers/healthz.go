@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/ethereum-optimism/optimism/indexer/api/middleware"
 	"net/http"
+
+	"github.com/ethereum-optimism/optimism/indexer/api/middleware"
 )
 
 func HealthzHandler(w http.ResponseWriter, r *http.Request) {

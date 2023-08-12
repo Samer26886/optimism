@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/log"
 	"net/http"
+
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // lazily typing numbers fixme
@@ -41,5 +42,10 @@ func jsonResponse(w http.ResponseWriter, logger log.Logger, data interface{}, st
 	}
 
 	w.WriteHeader(statusCode)
-	w.Write(jsonData)
+	_, err = w.Write(jsonData)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		logger.Error("Failed to write JSON data", err)
+		return
+	}
 }
