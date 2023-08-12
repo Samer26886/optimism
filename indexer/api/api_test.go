@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,8 @@ import (
 // MockBridgeTransfersView mocks the BridgeTransfersView interface
 type MockBridgeTransfersView struct{}
 
+var mockAddress = "0x4204204204204204204204204204204204204204"
+
 var (
 	deposit = database.L1BridgeDeposit{
 		TransactionSourceHash:     common.HexToHash("abc"),
@@ -25,7 +28,7 @@ var (
 	}
 
 	withdrawal = database.L2BridgeWithdrawal{
-		TransactionWithdrawalHash: common.HexToHash("0x456"),
+		TransactionWithdrawalHash: common.HexToHash("0x420"),
 		CrossDomainMessengerNonce: &database.U256{Int: big.NewInt(0)},
 		Tx:                        database.Transaction{},
 		TokenPair:                 database.TokenPair{},
@@ -81,7 +84,7 @@ func TestHealthz(t *testing.T) {
 func TestL1BridgeDepositsHandler(t *testing.T) {
 	logger := testlog.Logger(t, log.LvlInfo)
 	api := NewApi(&MockBridgeTransfersView{}, logger)
-	request, err := http.NewRequest("GET", "/api/v0/deposits/0x123", nil)
+	request, err := http.NewRequest("GET", fmt.Sprintf("/api/v0/deposits/%s", mockAddress), nil)
 	assert.Nil(t, err)
 
 	responseRecorder := httptest.NewRecorder()
@@ -93,7 +96,7 @@ func TestL1BridgeDepositsHandler(t *testing.T) {
 func TestL2BridgeWithdrawalsByAddressHandler(t *testing.T) {
 	logger := testlog.Logger(t, log.LvlInfo)
 	api := NewApi(&MockBridgeTransfersView{}, logger)
-	request, err := http.NewRequest("GET", "/api/v0/withdrawals/0x123", nil)
+	request, err := http.NewRequest("GET", fmt.Sprintf("/api/v0/withdrawals/%s", mockAddress), nil)
 	assert.Nil(t, err)
 
 	responseRecorder := httptest.NewRecorder()
