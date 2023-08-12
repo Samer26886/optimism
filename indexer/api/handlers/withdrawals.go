@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/ethereum-optimism/optimism/indexer/api/middleware"
 	"github.com/ethereum-optimism/optimism/indexer/database"
@@ -43,9 +44,9 @@ type WithdrawalResponse struct {
 	Items       []WithdrawalItem `json:"items"`
 }
 
-func newWithdrawalResponse(withdrawals []*database.L2BridgeWithdrawalWithTransactionHashes) WithdrawalResponse {
-	items := make([]WithdrawalItem, 0, len(withdrawals))
-	for _, withdrawal := range withdrawals {
+func newWithdrawalResponse(withdrawals *database.L2BridgeWithdrawalsResponse) WithdrawalResponse {
+	items := make([]WithdrawalItem, 0, len(withdrawals.Withdrawals))
+	for _, withdrawal := range withdrawals.Withdrawals {
 		item := WithdrawalItem{
 			Guid:           withdrawal.L2BridgeWithdrawal.TransactionWithdrawalHash.String(),
 			BlockTimestamp: withdrawal.L2BridgeWithdrawal.Tx.Timestamp,
@@ -103,8 +104,8 @@ func newWithdrawalResponse(withdrawals []*database.L2BridgeWithdrawalWithTransac
 	}
 
 	return WithdrawalResponse{
-		Cursor:      "42042042-0420-4204-2042-420420420420", // TODO
-		HasNextPage: true,                                   // TODO
+		Cursor:      withdrawals.Cursor,
+		HasNextPage: withdrawals.HasNextPage,
 		Items:       items,
 	}
 }
@@ -114,15 +115,26 @@ func L2WithdrawalsHandler(w http.ResponseWriter, r *http.Request) {
 	logger := middleware.GetLogger(r.Context())
 
 	address := common.HexToAddress(chi.URLParam(r, "address"))
+	cursor := r.URL.Query().Get("cursor")
+	limitQuery := r.URL.Query().Get("limit")
 
-	withdrawals, err := btv.L2BridgeWithdrawalsByAddress(address)
-	if err != nil {
-		http.Error(w, "Internal server error fetching withdrawals", http.StatusInternalServerError)
-		logger.Error("Unable to read deposits from DB")
-		logger.Error(err.Error())
-		return
+	defaultLimit := 100
+	limit := defaultLimit
+	if limitQuery != "" {
+		parsedLimit, err := strconv.Atoi(limitQuery)
+		if err != nil {
+			http.Error(w, "Limit could not be parsed into a number", http.StatusBadRequest)
+			logger.Error("Invalid limit")
+			logger.Error(err.Error())
+		}
+		limit = parsedLimit
 	}
-
+	withdrawals, err := btv.L2BridgeWithdrawalsByAddress(address, cursor, limit)
+	if err != nil {
+		http.Error(w, "Internal server error reading withdrawals", http.StatusInternalServerError)
+		logger.Error("Unable to read withdrawals from DB")
+		logger.Error(err.Error())
+	}
 	response := newWithdrawalResponse(withdrawals)
 
 	jsonResponse(w, logger, response, http.StatusOK)
