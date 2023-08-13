@@ -2,11 +2,12 @@ package config
 
 import (
 	"os"
+	"reflect"
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/ethereum-optimism/optimism/indexer/processor"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum-optimism/optimism/op-service/log"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Config represents the `indexer.toml` file used to configure the indexer
@@ -16,14 +17,41 @@ type Config struct {
 	DB      DBConfig
 	API     APIConfig
 	Metrics MetricsConfig
-	Logger  log.Logger `toml:"-"`
+	Logger  log.CLIConfig
+}
+
+// fetch this via onchain config from RPCsConfig and remove from config in future
+type L1Contracts struct {
+	OptimismPortal         common.Address
+	L2OutputOracle         common.Address
+	L1CrossDomainMessenger common.Address
+	L1StandardBridge       common.Address
+	L1ERC721Bridge         common.Address
+
+	// Some more contracts -- ProxyAdmin, SystemConfig, etcc
+	// Ignore the auxiliary contracts?
+
+	// Legacy contracts? We'll add this in to index the legacy chain.
+	// Remove afterwards?
+}
+
+func (c L1Contracts) ToSlice() []common.Address {
+	fields := reflect.VisibleFields(reflect.TypeOf(c))
+	v := reflect.ValueOf(c)
+
+	contracts := make([]common.Address, len(fields))
+	for i, field := range fields {
+		contracts[i] = (v.FieldByName(field.Name).Interface()).(common.Address)
+	}
+
+	return contracts
 }
 
 // ChainConfig configures of the chain being indexed
 type ChainConfig struct {
 	// Configure known chains with the l2 chain id
 	Preset      int
-	L1Contracts processor.L1Contracts
+	L1Contracts L1Contracts
 }
 
 // RPCsConfig configures the RPC urls
