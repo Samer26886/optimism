@@ -22,18 +22,19 @@ type Claim struct {
 }
 
 type WithdrawalItem struct {
-	Guid            string    `json:"guid"`
-	BlockTimestamp  uint64    `json:"blockTimestamp"`
-	From            string    `json:"from"`
-	To              string    `json:"to"`
-	TransactionHash string    `json:"transactionHash"`
-	Amount          string    `json:"amount"`
-	BlockNumber     int       `json:"blockNumber"`
-	Proof           Proof     `json:"proof"`
-	Claim           Claim     `json:"claim"`
-	WithdrawalState string    `json:"withdrawalState"`
-	L1Token         TokenInfo `json:"l1Token"`
-	L2Token         TokenInfo `json:"l2Token"`
+	Guid            string      `json:"guid"`
+	BlockTimestamp  uint64      `json:"blockTimestamp"`
+	From            string      `json:"from"`
+	To              string      `json:"to"`
+	Tx              Transaction `json:"Tx"`
+	RelayTx         Transaction `json:"RelayTx"`
+	Amount          string      `json:"amount"`
+	BlockNumber     int         `json:"blockNumber"`
+	Proof           Proof       `json:"proof"`
+	Claim           Claim       `json:"claim"`
+	WithdrawalState string      `json:"withdrawalState"`
+	L1Token         TokenInfo   `json:"l1Token"`
+	L2Token         TokenInfo   `json:"l2Token"`
 }
 
 type WithdrawalResponse struct {
@@ -46,13 +47,24 @@ func newWithdrawalResponse(withdrawals []*database.L2BridgeWithdrawalWithTransac
 	items := make([]WithdrawalItem, 0, len(withdrawals))
 	for _, withdrawal := range withdrawals {
 		item := WithdrawalItem{
-			Guid:            withdrawal.L2BridgeWithdrawal.TransactionWithdrawalHash.String(),
-			BlockTimestamp:  withdrawal.L2BridgeWithdrawal.Tx.Timestamp,
-			From:            withdrawal.L2BridgeWithdrawal.Tx.FromAddress.String(),
-			To:              withdrawal.L2BridgeWithdrawal.Tx.ToAddress.String(),
-			TransactionHash: withdrawal.L2TransactionHash.String(),
-			Amount:          withdrawal.L2BridgeWithdrawal.Tx.Amount.Int.String(),
-			BlockNumber:     420, // TODO
+			Guid:           withdrawal.L2BridgeWithdrawal.TransactionWithdrawalHash.String(),
+			BlockTimestamp: withdrawal.L2BridgeWithdrawal.Tx.Timestamp,
+			From:           withdrawal.L2BridgeWithdrawal.Tx.FromAddress.String(),
+			To:             withdrawal.L2BridgeWithdrawal.Tx.ToAddress.String(),
+			Amount:         withdrawal.L2BridgeWithdrawal.Tx.Amount.Int.String(),
+			Tx: Transaction{
+				// BlockNumber:     420420,  // TODO
+				// BlockHash:       "0x420", // TODO
+				TransactionHash: withdrawal.L2TransactionHash.String(), // TODO
+				Timestamp:       withdrawal.L2BridgeWithdrawal.Tx.Timestamp,
+			},
+			RelayTx: Transaction{
+				// BlockNumber:     420420,  // TODO
+				// BlockHash:       "0x420", // TODO
+				// TransactionHash: withdrawal.L2TransactionHash.String(), // TODO
+				// Timestamp:       deposit.L1BridgeDeposit.Tx.Timestamp, // TODO
+			},
+			BlockNumber: 420, // TODO
 			Proof: Proof{
 				TransactionHash: withdrawal.ProvenL1TransactionHash.String(),
 				BlockTimestamp:  withdrawal.L2BridgeWithdrawal.Tx.Timestamp,

@@ -15,7 +15,8 @@ type DepositItem struct {
 	To   string `json:"to"`
 	// TODO could consider OriginTx to be more generic to handling L2 to L2 deposits
 	// this seems more clear today though
-	Tx      Transaction `json:"Block"`
+	Tx      Transaction `json:"Tx"`
+	RelayTx Transaction `json:"RelayTx"`
 	Amount  string      `json:"amount"`
 	L1Token TokenInfo   `json:"l1Token"`
 	L2Token TokenInfo   `json:"l2Token"`
@@ -34,10 +35,16 @@ func newDepositResponse(deposits []*database.L1BridgeDepositWithTransactionHashe
 		item := DepositItem{
 			Guid: deposit.L1BridgeDeposit.TransactionSourceHash.String(),
 			Tx: Transaction{
-				BlockNumber:     420420,  // TODO
-				BlockHash:       "0x420", // TODO
-				TransactionHash: "0x420", // TODO
+				// BlockNumber:     420420,  // TODO
+				// BlockHash:       "0x420", // TODO
+				TransactionHash: deposit.L1TransactionHash.String(), // TODO
 				Timestamp:       deposit.L1BridgeDeposit.Tx.Timestamp,
+			},
+			RelayTx: Transaction{
+				// BlockNumber:     420420,  // TODO
+				// BlockHash:       "0x420", // TODO
+				TransactionHash: deposit.L2TransactionHash.String(), // TODO
+				// Timestamp:       deposit.L1BridgeDeposit.Tx.Timestamp, // TODO
 			},
 			From:   deposit.L1BridgeDeposit.Tx.FromAddress.String(),
 			To:     deposit.L1BridgeDeposit.Tx.ToAddress.String(),
