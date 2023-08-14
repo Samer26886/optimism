@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/ethereum-optimism/optimism/op-service/log"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+// in future presets can just be onchain config and fetched on initialization
 
 // Config represents the `indexer.toml` file used to configure the indexer
 type Config struct {
@@ -50,7 +53,8 @@ func (c L1Contracts) ToSlice() []common.Address {
 // ChainConfig configures of the chain being indexed
 type ChainConfig struct {
 	// Configure known chains with the l2 chain id
-	Preset      int
+	Preset int
+	// Configure custom chains via providing the L1Contract addresses
 	L1Contracts L1Contracts
 }
 
@@ -85,18 +89,24 @@ type MetricsConfig struct {
 func LoadConfig(path string) (Config, error) {
 	var conf Config
 
-	// Read the config file.
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return conf, err
 	}
 
-	// Replace environment variables.
 	data = []byte(os.ExpandEnv(string(data)))
 
-	// Decode the TOML data.
 	if _, err := toml.Decode(string(data), &conf); err != nil {
 		return conf, err
+	}
+
+	if conf.Chain.Preset != 0 {
+		knownContracts, ok := presetL1Contracts[conf.Chain.Preset]
+		if ok {
+			conf.Chain.L1Contracts = knownContracts
+		} else {
+			return conf, fmt.Errorf("unknown preset: %d", conf.Chain.Preset)
+		}
 	}
 
 	return conf, nil
