@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_data:/data/postgres
 
-  processor:
+  indexer:
     build:
       context: ..
       dockerfile: indexer/Dockerfile.refresh
